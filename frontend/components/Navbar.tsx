@@ -36,6 +36,12 @@ export default function Navbar() {
                 <Link href="/users" className={pathname === "/users" ? "active" : ""}>
                   Users
                 </Link>
+                <Link href="/masters" className={pathname.startsWith("/masters") ? "active" : ""}>
+                  Masters
+                </Link>
+                <Link href="/access/role-assignments" className={pathname.startsWith("/access/role-assignments") ? "active" : ""}>
+                  Roles
+                </Link>
                 <Link href="/audit" className={pathname === "/audit" ? "active" : ""}>
                   Audit Trail
                 </Link>

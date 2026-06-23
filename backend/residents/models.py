@@ -59,6 +59,43 @@ class ResidentProfile(models.Model):
     # Department and Hospital Scope (Temporary Text Fields)
     institution_name = models.CharField(max_length=255, blank=True, default="")
     department_name = models.CharField(max_length=255, blank=True, default="")
+
+    # Master References
+    institution_ref = models.ForeignKey(
+        "masters.Institution",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="residents",
+    )
+    training_site_ref = models.ForeignKey(
+        "masters.TrainingSite",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="residents",
+    )
+    department_ref = models.ForeignKey(
+        "masters.Department",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="residents",
+    )
+    program_ref = models.ForeignKey(
+        "masters.Program",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="residents",
+    )
+    specialty_ref = models.ForeignKey(
+        "masters.Specialty",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="residents",
+    )
     
     current_status = models.CharField(
         max_length=50,

@@ -12,6 +12,7 @@ class HealthEndpointTests(TestCase):
             {
                 "status": "ok",
                 "service": "pgms-backend",
-                "brick": "1",
+                "brick": "4",
             },
         )
+

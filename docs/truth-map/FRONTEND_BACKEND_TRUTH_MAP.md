@@ -31,6 +31,11 @@ This document maps all public and protected user interfaces (frontend) to their 
 | Supervisor unarchive | `/supervisors/[id]` | `POST /api/supervisors/{id}/unarchive/` | `supervisors.SupervisorProfile` | `UTRMC_ADMIN` | Implemented | Brick 3 |
 | Supervisor duplicate check | `/supervisors/new` | `POST /api/supervisors/check-duplicates/` | None | `UTRMC_ADMIN` | Implemented | Brick 3 |
 | Supervisor view-only | `/supervisors` & `/[id]` | `GET /api/supervisors/` & `/{id}/` | `supervisors.SupervisorProfile` | `SUPPORT_STAFF` | Implemented | Brick 3 |
+| Masters catalog lists | `/masters` | `GET /api/masters/{catalog}/` | `masters.{CatalogModel}` | Authenticated | Implemented | Brick 4 |
+| Masters catalog write | `/masters` | `POST` / `PUT` / `PATCH /api/masters/{catalog}/{id}/` | `masters.{CatalogModel}` | `UTRMC_ADMIN` or `UTRMC_ADMIN_ACCESS` role | Implemented | Brick 4 |
+| Masters catalog delete | `/masters` | `DELETE /api/masters/{catalog}/{id}/` | `masters.{CatalogModel}` | `UTRMC_ADMIN` or `UTRMC_ADMIN_ACCESS` role | Implemented | Brick 4 |
+| Role assignment list | `/access/role-assignments` | `GET /api/access/role-assignments/` | `access.UserRoleAssignment` | `UTRMC_ADMIN` or `UTRMC_ADMIN_ACCESS` role | Implemented | Brick 4 |
+| Role assignment edit/create | `/access/role-assignments` | `POST` / `PUT` / `DELETE /api/access/role-assignments/{id}/` | `access.UserRoleAssignment` | `UTRMC_ADMIN` or `UTRMC_ADMIN_ACCESS` role | Implemented | Brick 4 |
 
 ---
 

@@ -39,6 +39,50 @@ class SupervisorProfile(models.Model):
     department_name = models.CharField(max_length=255, blank=True, default="")
     program_name = models.CharField(max_length=255, blank=True, default="")
 
+    # Master References
+    institution_ref = models.ForeignKey(
+        "masters.Institution",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="supervisors",
+    )
+    training_site_ref = models.ForeignKey(
+        "masters.TrainingSite",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="supervisors",
+    )
+    department_ref = models.ForeignKey(
+        "masters.Department",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="supervisors",
+    )
+    program_ref = models.ForeignKey(
+        "masters.Program",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="supervisors",
+    )
+    specialty_ref = models.ForeignKey(
+        "masters.Specialty",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="supervisors",
+    )
+    designation_ref = models.ForeignKey(
+        "masters.Designation",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="supervisors",
+    )
+
     primary_office_phone = models.CharField(max_length=50, blank=True, default="")
     primary_office_phone_normalized = models.CharField(max_length=50, blank=True, default="")
     alternate_phone = models.CharField(max_length=50, blank=True, default="")

@@ -68,6 +68,8 @@ INSTALLED_APPS = [
     "audit",
     "residents",
     "supervisors",
+    "masters",
+    "access",
 ]
 
 MIDDLEWARE = [
