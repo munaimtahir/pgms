@@ -68,6 +68,13 @@ class UserCreateSerializer(serializers.ModelSerializer):
             "email": {"required": False, "allow_null": True},
         }
 
+    def validate_user_category(self, value: str) -> str:
+        if value in ["RESIDENT", "SUPERVISOR"]:
+            raise serializers.ValidationError(
+                f"Please provision {value.lower()} accounts via their dedicated profile creation endpoints."
+            )
+        return value
+
     def create(self, validated_data: dict[str, Any]) -> User:
         password = validated_data.pop("password", None)
         user = User(**validated_data)

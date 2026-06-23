@@ -16,6 +16,13 @@ This document maps all public and protected user interfaces (frontend) to their 
 | Reset password | `/users/[id]` | `POST /api/users/{id}/reset-password/` | `accounts.User` | `UTRMC_ADMIN` | Implemented | Brick 1 |
 | Audit list | `/audit` | `GET /api/audit/` | `audit.AuditLog` | `UTRMC_ADMIN` | Implemented | Brick 1 |
 | Logout | Navigation logout CTA | `POST /api/auth/logout/` (blacklist token) | None | Authenticated | Implemented | Brick 1 |
+| Resident list | `/residents` | `GET /api/residents/` | `residents.ResidentProfile` | `UTRMC_ADMIN`, `SUPPORT_STAFF` | Implemented | Brick 2 |
+| Resident create | `/residents/new` | `POST /api/residents/` | `residents.ResidentProfile` + `accounts.User` | `UTRMC_ADMIN`, `SUPPORT_STAFF` | Implemented | Brick 2 |
+| Resident detail/edit | `/residents/[id]` | `GET` / `PATCH /api/residents/{id}/` | `residents.ResidentProfile` | `UTRMC_ADMIN`, `SUPPORT_STAFF` | Implemented | Brick 2 |
+| Resident self-view | `/residents/[id]` | `GET` / `PATCH /api/residents/{id}/` | `residents.ResidentProfile` | Self `RESIDENT` | Implemented | Brick 2 |
+| Resident archive | `/residents/[id]` | `DELETE /api/residents/{id}/` | `residents.ResidentProfile` | `UTRMC_ADMIN` | Implemented | Brick 2 |
+| Resident unarchive | `/residents/[id]` | `POST /api/residents/{id}/unarchive/` | `residents.ResidentProfile` | `UTRMC_ADMIN` | Implemented | Brick 2 |
+| Resident duplicate check | `/residents/new` | `POST /api/residents/check-duplicates/` | None | `UTRMC_ADMIN`, `SUPPORT_STAFF` | Implemented | Brick 2 |
 
 ---
 

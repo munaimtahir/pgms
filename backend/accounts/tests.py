@@ -146,16 +146,16 @@ class AccountsAndAuditTests(APITestCase):
         
         # Create user
         create_payload = {
-            "username": "newsupervisor",
-            "email": "supervisor@example.com",
-            "full_name": "Dr. Supervisor",
+            "username": "newsupportstaff",
+            "email": "support@example.com",
+            "full_name": "Support Staff Member",
             "phone": "987654321",
-            "user_category": "SUPERVISOR",
+            "user_category": "SUPPORT_STAFF",
         }
         response = self.client.post(self.user_list_url, create_payload, **headers)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         
-        new_user = User.objects.get(username="newsupervisor")
+        new_user = User.objects.get(username="newsupportstaff")
         self.assertTrue(new_user.must_change_password)
         self.assertFalse(new_user.is_profile_complete)
         

@@ -21,13 +21,15 @@ export default function Navbar() {
 
         {!isRestricted && (
           <div className="nav-links">
+            {(user.user_category === "UTRMC_ADMIN" || user.user_category === "SUPPORT_STAFF") && (
+              <Link href="/residents" className={pathname.startsWith("/residents") ? "active" : ""}>
+                Residents
+              </Link>
+            )}
             {user.user_category === "UTRMC_ADMIN" ? (
               <>
                 <Link href="/users" className={pathname === "/users" ? "active" : ""}>
                   Users
-                </Link>
-                <Link href="/users/new" className={pathname === "/users/new" ? "active" : ""}>
-                  New User
                 </Link>
                 <Link href="/audit" className={pathname === "/audit" ? "active" : ""}>
                   Audit Trail

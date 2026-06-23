@@ -7,9 +7,7 @@ export default function HealthPage() {
   const [backendBrick, setBackendBrick] = useState<string>("N/A");
 
   useEffect(() => {
-    const backendUrl =
-      process.env.NEXT_PUBLIC_BACKEND_BASE_URL || "http://localhost:8000";
-    fetch(`${backendUrl}/api/health/`)
+    fetch("/api/health/")
       .then((res) => res.json())
       .then((data) => {
         setBackendStatus(data.status === "ok" ? "Connected" : "Error");

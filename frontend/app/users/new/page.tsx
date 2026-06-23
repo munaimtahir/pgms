@@ -11,7 +11,7 @@ export default function NewUserPage() {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [category, setCategory] = useState("RESIDENT");
+  const [category, setCategory] = useState("SUPPORT_STAFF");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -75,20 +75,6 @@ export default function NewUserPage() {
         <form onSubmit={handleSubmit} className="user-form">
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="username">Username (Login ID)</label>
-              <input
-                type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. resident.john"
-                disabled={submitting}
-                required
-              />
-              <p className="field-hint">Initial temporary password matches the username.</p>
-            </div>
-
-            <div className="form-group">
               <label htmlFor="category">User Category / Role</label>
               <select
                 id="category"
@@ -96,61 +82,91 @@ export default function NewUserPage() {
                 onChange={(e) => setCategory(e.target.value)}
                 disabled={submitting}
               >
-                <option value="RESIDENT">Resident</option>
-                <option value="SUPERVISOR">Supervisor</option>
                 <option value="SUPPORT_STAFF">Support Staff</option>
                 <option value="UTRMC_ADMIN">UTRMC Admin</option>
+                <option value="RESIDENT">Resident</option>
+                <option value="SUPERVISOR">Supervisor</option>
               </select>
             </div>
+
+            {(category === "RESIDENT" || category === "SUPERVISOR") ? null : (
+              <div className="form-group">
+                <label htmlFor="username">Username (Login ID)</label>
+                <input
+                  type="text"
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="e.g. support.john"
+                  disabled={submitting}
+                  required
+                />
+                <p className="field-hint">Initial temporary password matches the username.</p>
+              </div>
+            )}
           </div>
 
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="fullName">Full Name</label>
-              <input
-                type="text"
-                id="fullName"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="e.g. John Doe (Optional)"
-                disabled={submitting}
-              />
+          {(category === "RESIDENT" || category === "SUPERVISOR") ? (
+            <div className="redirect-box">
+              <span className="redirect-icon">💡</span>
+              <div className="redirect-content">
+                <p><strong>Note:</strong> {category === "RESIDENT" ? "Resident" : "Supervisor"} accounts cannot be created here. They must be provisioned alongside their profile details through the dedicated directories.</p>
+                <Link href={category === "RESIDENT" ? "/residents/new" : "/supervisors/new"} className="btn-redirect">
+                  Go to {category === "RESIDENT" ? "Resident" : "Supervisor"} Creation Flow
+                </Link>
+              </div>
             </div>
+          ) : (
+            <>
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="fullName">Full Name</label>
+                  <input
+                    type="text"
+                    id="fullName"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="e.g. John Doe (Optional)"
+                    disabled={submitting}
+                  />
+                </div>
 
-            <div className="form-group">
-              <label htmlFor="phone">Contact Phone</label>
-              <input
-                type="tel"
-                id="phone"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="e.g. 03001234567 (Optional)"
-                disabled={submitting}
-              />
-            </div>
-          </div>
+                <div className="form-group">
+                  <label htmlFor="phone">Contact Phone</label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. 03001234567 (Optional)"
+                    disabled={submitting}
+                  />
+                </div>
+              </div>
 
-          <div className="form-group">
-            <label htmlFor="email">Email Address</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. user@institution.edu (Optional)"
-              disabled={submitting}
-            />
-            <p className="field-hint">If left empty, the user must specify a unique email during first-login profile completion.</p>
-          </div>
+              <div className="form-group">
+                <label htmlFor="email">Email Address</label>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="e.g. user@institution.edu (Optional)"
+                  disabled={submitting}
+                />
+                <p className="field-hint">If left empty, the user must specify a unique email during first-login profile completion.</p>
+              </div>
 
-          <div className="actions-bar">
-            <Link href="/users" className="btn-cancel">
-              Cancel
-            </Link>
-            <button type="submit" className="btn-submit" disabled={submitting}>
-              {submitting ? "Creating Account..." : "Create Account"}
-            </button>
-          </div>
+              <div className="actions-bar">
+                <Link href="/users" className="btn-cancel">
+                  Cancel
+                </Link>
+                <button type="submit" className="btn-submit" disabled={submitting}>
+                  {submitting ? "Creating Account..." : "Create Account"}
+                </button>
+              </div>
+            </>
+          )}
         </form>
       </div>
 
@@ -289,6 +305,41 @@ export default function NewUserPage() {
         .btn-submit:disabled {
           opacity: 0.6;
           cursor: not-allowed;
+        }
+        .redirect-box {
+          background: rgba(143, 211, 255, 0.05);
+          border: 1px solid rgba(143, 211, 255, 0.2);
+          border-radius: 16px;
+          padding: 1.5rem;
+          display: flex;
+          gap: 1rem;
+          align-items: flex-start;
+          backdrop-filter: blur(8px);
+        }
+        .redirect-icon {
+          font-size: 1.5rem;
+        }
+        .redirect-content p {
+          margin: 0 0 1rem;
+          font-size: 0.95rem;
+          color: var(--muted);
+          line-height: 1.5;
+        }
+        .btn-redirect {
+          display: inline-block;
+          text-decoration: none;
+          background: var(--text);
+          color: var(--bg);
+          padding: 0.65rem 1.25rem;
+          border-radius: 10px;
+          font-size: 0.85rem;
+          font-weight: 700;
+          transition: all 0.2s ease;
+        }
+        .btn-redirect:hover {
+          background: var(--accent-strong);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(143, 211, 255, 0.2);
         }
       `}</style>
     </div>

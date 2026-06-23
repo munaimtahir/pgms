@@ -1,10 +1,15 @@
 "use client";
 
-// Dynamic API URL for runtime flexibility, falling back to localhost during local dev
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_BACKEND_BASE_URL
-    ? `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api`
-    : "http://localhost:8000/api";
+function resolveApiBaseUrl(): string {
+  const sameOriginApi = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+  if (sameOriginApi) {
+    return sameOriginApi.replace(/\/$/, "");
+  }
+
+  return "/api";
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 export interface User {
   id: number;
@@ -13,10 +18,51 @@ export interface User {
   full_name: string;
   phone: string;
   user_category: "RESIDENT" | "SUPERVISOR" | "SUPPORT_STAFF" | "UTRMC_ADMIN";
+  is_active: boolean;
   is_profile_complete: boolean;
   must_change_password: boolean;
   extra_data: Record<string, any>;
   allowed_next_route: string;
+}
+
+export interface ResidentProfile {
+  id: number;
+  user: User;
+  father_name: string;
+  cnic_or_passport: string;
+  gender: "MALE" | "FEMALE" | "OTHER";
+  date_of_birth: string | null;
+  primary_phone: string;
+  primary_phone_normalized: string;
+  whatsapp_number: string;
+  whatsapp_number_normalized: string;
+  alternate_email: string | null;
+  address: string;
+  program_name: string;
+  specialty_name: string;
+  training_level: string;
+  training_year: string;
+  session_year: string;
+  date_of_joining: string | null;
+  expected_completion_date: string | null;
+  institution_name: string;
+  department_name: string;
+  current_status: "ACTIVE" | "ON_LEAVE" | "TRANSFERRED" | "COMPLETED" | "DROPPED" | "SUSPENDED" | "UNKNOWN";
+  pmdc_number: string | null;
+  university_registration_number: string;
+  employee_or_training_id: string;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
+  emergency_contact_relation: string;
+  notes: string;
+  extra_data: Record<string, any>;
+  is_archived: boolean;
+  archived_at: string | null;
+  archived_by: number | null;
+  created_by: number | null;
+  updated_by: number | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export async function apiRequest(path: string, options: RequestInit = {}): Promise<Response> {
