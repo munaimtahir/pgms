@@ -23,6 +23,14 @@ This document maps all public and protected user interfaces (frontend) to their 
 | Resident archive | `/residents/[id]` | `DELETE /api/residents/{id}/` | `residents.ResidentProfile` | `UTRMC_ADMIN` | Implemented | Brick 2 |
 | Resident unarchive | `/residents/[id]` | `POST /api/residents/{id}/unarchive/` | `residents.ResidentProfile` | `UTRMC_ADMIN` | Implemented | Brick 2 |
 | Resident duplicate check | `/residents/new` | `POST /api/residents/check-duplicates/` | None | `UTRMC_ADMIN`, `SUPPORT_STAFF` | Implemented | Brick 2 |
+| Supervisor list | `/supervisors` | `GET /api/supervisors/` | `supervisors.SupervisorProfile` | `UTRMC_ADMIN`, `SUPPORT_STAFF` | Implemented | Brick 3 |
+| Supervisor create | `/supervisors/new` | `POST /api/supervisors/` | `supervisors.SupervisorProfile` + `accounts.User` | `UTRMC_ADMIN` | Implemented | Brick 3 |
+| Supervisor detail/edit | `/supervisors/[id]` | `GET` / `PATCH /api/supervisors/{id}/` | `supervisors.SupervisorProfile` | `UTRMC_ADMIN` | Implemented | Brick 3 |
+| Supervisor self-view | `/supervisors/[id]` | `GET` / `PATCH /api/supervisors/{id}/` | `supervisors.SupervisorProfile` | Self `SUPERVISOR` | Implemented | Brick 3 |
+| Supervisor archive | `/supervisors/[id]` | `DELETE /api/supervisors/{id}/` | `supervisors.SupervisorProfile` | `UTRMC_ADMIN` | Implemented | Brick 3 |
+| Supervisor unarchive | `/supervisors/[id]` | `POST /api/supervisors/{id}/unarchive/` | `supervisors.SupervisorProfile` | `UTRMC_ADMIN` | Implemented | Brick 3 |
+| Supervisor duplicate check | `/supervisors/new` | `POST /api/supervisors/check-duplicates/` | None | `UTRMC_ADMIN` | Implemented | Brick 3 |
+| Supervisor view-only | `/supervisors` & `/[id]` | `GET /api/supervisors/` & `/{id}/` | `supervisors.SupervisorProfile` | `SUPPORT_STAFF` | Implemented | Brick 3 |
 
 ---
 

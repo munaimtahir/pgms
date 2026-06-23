@@ -65,6 +65,39 @@ export interface ResidentProfile {
   updated_at: string;
 }
 
+export interface SupervisorProfile {
+  id: number;
+  user: User;
+  designation: string;
+  qualification: string;
+  pmdc_number: string | null;
+  specialty_name: string;
+  subspecialty_name: string;
+  institution_name: string;
+  department_name: string;
+  program_name: string;
+  primary_office_phone: string;
+  primary_office_phone_normalized: string;
+  alternate_phone: string;
+  alternate_phone_normalized: string;
+  official_email: string | null;
+  room_or_office: string;
+  availability_notes: string;
+  supervision_status: "ACTIVE" | "ON_LEAVE" | "RETIRED" | "TRANSFERRED" | "SUSPENDED" | "INACTIVE" | "UNKNOWN";
+  max_active_residents: number;
+  can_supervise_thesis: boolean;
+  can_supervise_clinical_training: boolean;
+  notes: string;
+  extra_data: Record<string, any>;
+  is_archived: boolean;
+  archived_at: string | null;
+  archived_by: number | null;
+  created_by: number | null;
+  updated_by: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export async function apiRequest(path: string, options: RequestInit = {}): Promise<Response> {
   const token = typeof window !== "undefined" ? localStorage.getItem("pgms_access_token") : null;
   const headers = new Headers(options.headers || {});

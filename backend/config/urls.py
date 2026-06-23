@@ -13,6 +13,7 @@ from accounts.views import (
 )
 from audit.views import AuditLogViewSet
 from residents.views import ResidentViewSet
+from supervisors.views import SupervisorViewSet
 
 
 def health_view(_request):
@@ -29,6 +30,7 @@ router = DefaultRouter()
 router.register("users", UserViewSet, basename="user")
 router.register("audit", AuditLogViewSet, basename="audit")
 router.register("residents", ResidentViewSet, basename="resident")
+router.register("supervisors", SupervisorViewSet, basename="supervisor")
 
 urlpatterns = [
     path("api/health/", health_view, name="health-check"),
