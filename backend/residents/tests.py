@@ -13,6 +13,7 @@ from rest_framework.test import APITestCase
 from audit.models import AuditLog
 from residents.models import ResidentProfile
 from residents.services import create_resident_with_user, validate_resident_uniqueness
+from access.models import UserRoleAssignment
 
 User = get_user_model()
 
@@ -164,6 +165,21 @@ class ResidentAPIPermissionTests(APITestCase):
         self.support = User.objects.create_user(username="support_api", password="password", user_category="SUPPORT_STAFF", is_profile_complete=True, must_change_password=False)
         self.supervisor = User.objects.create_user(username="supervisor_api", password="password", user_category="SUPERVISOR", is_profile_complete=True, must_change_password=False)
         
+        # Setup master metadata
+        from masters.models import Institution, TrainingSite, Department, Program, AcademicSession
+        self.inst = Institution.objects.create(name="FMU", code="FMU")
+        self.site = TrainingSite.objects.create(name="Allied Hospital", code="AH", institution=self.inst)
+        self.dept = Department.objects.create(name="Cardiology", code="CARD", training_site=self.site)
+        self.prog = Program.objects.create(name="FCPS", code="FCPS")
+        self.session = AcademicSession.objects.create(name="2026 Session", code="2026", start_year=2026, end_year=2030)
+
+        # Setup support staff scope
+        UserRoleAssignment.objects.create(
+            user=self.support,
+            role=UserRoleAssignment.Role.SUPPORT_STAFF_ACCESS,
+            scope_type=UserRoleAssignment.ScopeType.GLOBAL,
+        )
+
         # Create a resident with profile
         user_data = {
             "username": "resident_api",
@@ -177,6 +193,10 @@ class ResidentAPIPermissionTests(APITestCase):
             "pmdc_number": "12345-A",
             "program_name": "FCPS",
             "specialty_name": "Cardiology",
+            "training_site_ref": self.site,
+            "department_ref": self.dept,
+            "program_ref": self.prog,
+            "academic_session_ref": self.session,
         }
         self.resident_profile = create_resident_with_user(user_data, profile_data)
         self.resident_user = self.resident_profile.user
@@ -215,6 +235,10 @@ class ResidentAPIPermissionTests(APITestCase):
             "phone": "03009876543",
             "cnic_or_passport": "99999-9999999-9",
             "pmdc_number": "99999-Z",
+            "training_site_ref": self.site.pk,
+            "department_ref": self.dept.pk,
+            "program_ref": self.prog.pk,
+            "academic_session_ref": self.session.pk,
         }
         response = self.client.post(self.list_url, create_payload, format="json", **headers)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -254,6 +278,10 @@ class ResidentAPIPermissionTests(APITestCase):
             "full_name": "Support Created Resident",
             "phone": "03001112222",
             "cnic_or_passport": "88888-8888888-8",
+            "training_site_ref": self.site.pk,
+            "department_ref": self.dept.pk,
+            "program_ref": self.prog.pk,
+            "academic_session_ref": self.session.pk,
         }
         response = self.client.post(self.list_url, create_payload, format="json", **headers)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -333,3 +361,112 @@ class ResidentAPIPermissionTests(APITestCase):
         self.assertIn("cnic_or_passport", response.data["duplicates"])
         self.assertIn("email", response.data["duplicates"])
         self.assertIn("pmdc_number", response.data["duplicates"])
+
+
+class ResidentIdentityScopingTests(APITestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser(
+            username="admin_user",
+            email="admin@example.com",
+            password="adminpassword123",
+        )
+        self.staff_user = User.objects.create_user(
+            username="staff_scoped",
+            email="staff_scoped@example.com",
+            user_category="SUPPORT_STAFF",
+            password="staffpassword123",
+        )
+        self.staff_user.must_change_password = False
+        self.staff_user.is_profile_complete = True
+        self.staff_user.save()
+        
+        # Setup master metadata
+        from masters.models import Institution, TrainingSite, Department, Program, AcademicSession
+        self.inst = Institution.objects.create(name="FMU", code="FMU")
+        self.site = TrainingSite.objects.create(name="Allied Hospital", code="AH", institution=self.inst)
+        self.dept = Department.objects.create(name="Cardiology", code="CARD", training_site=self.site)
+        self.prog = Program.objects.create(name="FCPS", code="FCPS")
+        self.session = AcademicSession.objects.create(name="2026 Session", code="2026", start_year=2026, end_year=2030)
+
+        # Setup support staff scope to Allied Hospital
+        UserRoleAssignment.objects.create(
+            user=self.staff_user,
+            role=UserRoleAssignment.Role.SUPPORT_STAFF_ACCESS,
+            scope_type=UserRoleAssignment.ScopeType.TRAINING_SITE,
+            training_site=self.site,
+        )
+
+    def test_new_resident_creation_enforces_identity_fks(self):
+        """Create resident requires training_site, department, program, session."""
+        self.client.force_authenticate(user=self.admin)
+        
+        # Missing department_ref
+        payload = {
+            "username": "new_resident",
+            "email": "new_res@example.com",
+            "full_name": "New Resident",
+            "phone": "03001234567",
+            "father_name": "Father",
+            "cnic_or_passport": "99999-9999999-9",
+            "gender": "MALE",
+            "training_site_ref": self.site.pk,
+            "program_ref": self.prog.pk,
+            "academic_session_ref": self.session.pk,
+        }
+        
+        response = self.client.post(reverse("resident-list"), payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("department_ref", response.data)
+
+        # Success when all provided
+        payload["department_ref"] = self.dept.pk
+        response = self.client.post(reverse("resident-list"), payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["identity_status"], "COMPLETE")
+
+    def test_unmapped_resident_retrieval_incomplete_status(self):
+        """Existing text-only profiles can be retrieved and show identity_status='INCOMPLETE'."""
+        user = User.objects.create_user(
+            username="old_resident",
+            email="old_res@example.com",
+            user_category="RESIDENT",
+        )
+        profile = ResidentProfile.objects.create(
+            user=user,
+            cnic_or_passport="88888-8888888-8",
+            department_name="Urology",
+        )
+        
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(reverse("resident-detail", args=[profile.pk]))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["identity_status"], "INCOMPLETE")
+
+    def test_scoped_access_filtering(self):
+        """SUPPORT_STAFF sees only residents in their scope training site."""
+        # Resident in Allied Hospital (matching scope)
+        user_in = User.objects.create_user(username="res_in", email="res_in@example.com", user_category="RESIDENT")
+        ResidentProfile.objects.create(
+            user=user_in,
+            cnic_or_passport="11111-1111111-1",
+            training_site_ref=self.site,
+        )
+
+        # Resident in another site (out of scope)
+        from masters.models import TrainingSite
+        other_site = TrainingSite.objects.create(name="FIC", code="FIC", institution=self.inst)
+        user_out = User.objects.create_user(username="res_out", email="res_out@example.com", user_category="RESIDENT")
+        ResidentProfile.objects.create(
+            user=user_out,
+            cnic_or_passport="22222-2222222-2",
+            training_site_ref=other_site,
+        )
+
+        self.client.force_authenticate(user=self.staff_user)
+        response = self.client.get(reverse("resident-list"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        usernames = [r["user"]["username"] for r in response.data]
+        self.assertIn("res_in", usernames)
+        self.assertNotIn("res_out", usernames)
+

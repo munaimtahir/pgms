@@ -45,6 +45,41 @@ export default function ResidentDetailPage() {
   const [departmentName, setDepartmentName] = useState("");
   const [currentStatus, setCurrentStatus] = useState("ACTIVE");
 
+  const [institutionRef, setInstitutionRef] = useState("");
+  const [trainingSiteRef, setTrainingSiteRef] = useState("");
+  const [departmentRef, setDepartmentRef] = useState("");
+  const [programRef, setProgramRef] = useState("");
+  const [academicSessionRef, setAcademicSessionRef] = useState("");
+
+  const [options, setOptions] = useState<{
+    institutions: any[];
+    hospitals: any[];
+    departments: any[];
+    programs: any[];
+    academic_sessions: any[];
+  }>({
+    institutions: [],
+    hospitals: [],
+    departments: [],
+    programs: [],
+    academic_sessions: [],
+  });
+
+  useEffect(() => {
+    async function loadOptions() {
+      try {
+        const res = await apiRequest("/identity/options/");
+        const data = await res.json();
+        if (res.status === 200) {
+          setOptions(data);
+        }
+      } catch (err) {
+        console.error("Failed to load options", err);
+      }
+    }
+    loadOptions();
+  }, []);
+
   const [pmdcNumber, setPmdcNumber] = useState("");
   const [universityRegistrationNumber, setUniversityRegistrationNumber] = useState("");
   const [employeeOrTrainingId, setEmployeeOrTrainingId] = useState("");
@@ -109,6 +144,12 @@ export default function ResidentDetailPage() {
     setDepartmentName(data.department_name);
     setCurrentStatus(data.current_status);
 
+    setInstitutionRef(data.institution_ref ? data.institution_ref.toString() : "");
+    setTrainingSiteRef(data.training_site_ref ? data.training_site_ref.toString() : "");
+    setDepartmentRef(data.department_ref ? data.department_ref.toString() : "");
+    setProgramRef(data.program_ref ? data.program_ref.toString() : "");
+    setAcademicSessionRef(data.academic_session_ref ? data.academic_session_ref.toString() : "");
+
     setPmdcNumber(data.pmdc_number || "");
     setUniversityRegistrationNumber(data.university_registration_number);
     setEmployeeOrTrainingId(data.employee_or_training_id);
@@ -158,6 +199,12 @@ export default function ResidentDetailPage() {
       payload.university_registration_number = universityRegistrationNumber;
       payload.employee_or_training_id = employeeOrTrainingId;
       payload.notes = notes;
+
+      payload.training_site_ref = trainingSiteRef ? Number(trainingSiteRef) : null;
+      payload.department_ref = departmentRef ? Number(departmentRef) : null;
+      payload.program_ref = programRef ? Number(programRef) : null;
+      payload.academic_session_ref = academicSessionRef ? Number(academicSessionRef) : null;
+      payload.institution_ref = institutionRef ? Number(institutionRef) : null;
 
       // Check user edits
       payload["user.full_name"] = fullName;

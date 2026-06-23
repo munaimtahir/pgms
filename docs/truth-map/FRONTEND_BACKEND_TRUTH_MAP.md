@@ -36,6 +36,8 @@ This document maps all public and protected user interfaces (frontend) to their 
 | Masters catalog delete | `/masters` | `DELETE /api/masters/{catalog}/{id}/` | `masters.{CatalogModel}` | `UTRMC_ADMIN` or `UTRMC_ADMIN_ACCESS` role | Implemented | Brick 4 |
 | Role assignment list | `/access/role-assignments` | `GET /api/access/role-assignments/` | `access.UserRoleAssignment` | `UTRMC_ADMIN` or `UTRMC_ADMIN_ACCESS` role | Implemented | Brick 4 |
 | Role assignment edit/create | `/access/role-assignments` | `POST` / `PUT` / `DELETE /api/access/role-assignments/{id}/` | `access.UserRoleAssignment` | `UTRMC_ADMIN` or `UTRMC_ADMIN_ACCESS` role | Implemented | Brick 4 |
+| Identity option catalog | Directory Pages / Forms | `GET /api/identity/options/` | None | Authenticated | Implemented | Brick 5 |
+| User scopes | Navigation / Context | `GET /api/access/my-scope/` | `access.UserRoleAssignment` | Authenticated | Implemented | Brick 5 |
 
 ---
 

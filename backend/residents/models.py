@@ -96,6 +96,14 @@ class ResidentProfile(models.Model):
         blank=True,
         related_name="residents",
     )
+    academic_session_ref = models.ForeignKey(
+        "masters.AcademicSession",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="residents",
+    )
+
     
     current_status = models.CharField(
         max_length=50,

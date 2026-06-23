@@ -36,6 +36,41 @@ export default function SupervisorDetailPage() {
   const [departmentName, setDepartmentName] = useState("");
   const [programName, setProgramName] = useState("");
 
+  const [trainingSiteRef, setTrainingSiteRef] = useState("");
+  const [departmentRef, setDepartmentRef] = useState("");
+  const [designationRef, setDesignationRef] = useState("");
+  const [programRef, setProgramRef] = useState("");
+  const [institutionRef, setInstitutionRef] = useState("");
+
+  const [options, setOptions] = useState<{
+    institutions: any[];
+    hospitals: any[];
+    departments: any[];
+    programs: any[];
+    designations: any[];
+  }>({
+    institutions: [],
+    hospitals: [],
+    departments: [],
+    programs: [],
+    designations: [],
+  });
+
+  useEffect(() => {
+    async function loadOptions() {
+      try {
+        const res = await apiRequest("/identity/options/");
+        const data = await res.json();
+        if (res.status === 200) {
+          setOptions(data);
+        }
+      } catch (err) {
+        console.error("Failed to load options", err);
+      }
+    }
+    loadOptions();
+  }, []);
+
   const [alternatePhone, setAlternatePhone] = useState("");
   const [roomOrOffice, setRoomOrOffice] = useState("");
   const [availabilityNotes, setAvailabilityNotes] = useState("");
@@ -92,6 +127,12 @@ export default function SupervisorDetailPage() {
     setDepartmentName(data.department_name);
     setProgramName(data.program_name);
 
+    setTrainingSiteRef(data.training_site_ref ? data.training_site_ref.toString() : "");
+    setDepartmentRef(data.department_ref ? data.department_ref.toString() : "");
+    setDesignationRef(data.designation_ref ? data.designation_ref.toString() : "");
+    setProgramRef(data.program_ref ? data.program_ref.toString() : "");
+    setInstitutionRef(data.institution_ref ? data.institution_ref.toString() : "");
+
     setAlternatePhone(data.alternate_phone);
     setRoomOrOffice(data.room_or_office);
     setAvailabilityNotes(data.availability_notes);
@@ -132,6 +173,12 @@ export default function SupervisorDetailPage() {
       payload.can_supervise_thesis = canSuperviseThesis;
       payload.can_supervise_clinical_training = canSuperviseClinicalTraining;
       payload.notes = notes;
+
+      payload.training_site_ref = trainingSiteRef ? Number(trainingSiteRef) : null;
+      payload.department_ref = departmentRef ? Number(departmentRef) : null;
+      payload.designation_ref = designationRef ? Number(designationRef) : null;
+      payload.program_ref = programRef ? Number(programRef) : null;
+      payload.institution_ref = institutionRef ? Number(institutionRef) : null;
 
       // Check user edits
       payload["user.full_name"] = fullName;
@@ -271,7 +318,14 @@ export default function SupervisorDetailPage() {
         <div className="header-zone">
           <div className="title-area">
             <p className="eyebrow">Supervisor Details</p>
-            <h2 className="title">{profile?.user.full_name || profile?.user.username}</h2>
+            <h2 className="title">
+              {profile?.user.full_name || profile?.user.username}
+              {profile && (
+                <span className={`status-badge badge-${profile.identity_status.toLowerCase()}`} style={{ marginLeft: "1rem" }}>
+                  Identity: {profile.identity_status}
+                </span>
+              )}
+            </h2>
             <p className="subtitle">@{profile?.user.username} — ID #{profile?.id}</p>
           </div>
           <div className="header-actions">
@@ -373,13 +427,29 @@ export default function SupervisorDetailPage() {
             <h3 className="section-title">Professional Details</h3>
             <div className="form-grid">
               <div className="form-group">
-                <label>Designation</label>
-                <input
-                  type="text"
-                  value={designation}
-                  onChange={(e) => setDesignation(e.target.value)}
-                  disabled={!editMode || isSelfSupervisor}
-                />
+                <label>Designation *</label>
+                {editMode && !isSelfSupervisor ? (
+                  <select
+                    value={designationRef}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setDesignationRef(val);
+                      const selected = options.designations.find(d => d.id.toString() === val);
+                      setDesignation(selected ? selected.name : "");
+                    }}
+                  >
+                    <option value="">Select Designation</option>
+                    {options.designations.map(d => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={profile?.designation_ref_detail?.name || designation || "—"}
+                    disabled
+                  />
+                )}
               </div>
 
               <div className="form-group">
@@ -426,36 +496,108 @@ export default function SupervisorDetailPage() {
 
           {/* Section: Institutional Scope */}
           <div className="form-section">
-            <h3 className="section-title">Hospital & Dept Details (Text)</h3>
+            <h3 className="section-title">Hospital & Dept Details / Master references</h3>
             <div className="form-grid">
               <div className="form-group">
-                <label>Institution / Training Site</label>
-                <input
-                  type="text"
-                  value={institutionName}
-                  onChange={(e) => setInstitutionName(e.target.value)}
-                  disabled={!editMode || isSelfSupervisor}
-                />
+                <label>Hospital / Training Site *</label>
+                {editMode && !isSelfSupervisor ? (
+                  <select
+                    value={trainingSiteRef}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setTrainingSiteRef(val);
+                      const selected = options.hospitals.find(h => h.id.toString() === val);
+                      setInstitutionName(selected ? selected.name : "");
+                    }}
+                  >
+                    <option value="">Select Hospital</option>
+                    {options.hospitals.map(h => (
+                      <option key={h.id} value={h.id}>{h.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={profile?.training_site_ref_detail?.name || institutionName || "N/A"}
+                    disabled
+                  />
+                )}
               </div>
 
               <div className="form-group">
-                <label>Department Name</label>
-                <input
-                  type="text"
-                  value={departmentName}
-                  onChange={(e) => setDepartmentName(e.target.value)}
-                  disabled={!editMode || isSelfSupervisor}
-                />
+                <label>Department / Discipline *</label>
+                {editMode && !isSelfSupervisor ? (
+                  <select
+                    value={departmentRef}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setDepartmentRef(val);
+                      const selected = options.departments.find(d => d.id.toString() === val);
+                      setDepartmentName(selected ? selected.name : "");
+                    }}
+                  >
+                    <option value="">Select Department / Discipline</option>
+                    {options.departments.map(d => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={profile?.department_ref_detail?.name || departmentName || "N/A"}
+                    disabled
+                  />
+                )}
               </div>
 
               <div className="form-group">
-                <label>Associated Program</label>
-                <input
-                  type="text"
-                  value={programName}
-                  onChange={(e) => setProgramName(e.target.value)}
-                  disabled={!editMode || isSelfSupervisor}
-                />
+                <label>Associated Program (Optional)</label>
+                {editMode && !isSelfSupervisor ? (
+                  <select
+                    value={programRef}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setProgramRef(val);
+                      const selected = options.programs.find(p => p.id.toString() === val);
+                      setProgramName(selected ? selected.name : "");
+                    }}
+                  >
+                    <option value="">Select Program</option>
+                    {options.programs.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={profile?.program_ref_detail?.name || programName || "N/A"}
+                    disabled
+                  />
+                )}
+              </div>
+
+              <div className="form-group">
+                <label>Institution (Optional)</label>
+                {editMode && !isSelfSupervisor ? (
+                  <select
+                    value={institutionRef}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setInstitutionRef(val);
+                    }}
+                  >
+                    <option value="">Select Institution</option>
+                    {options.institutions.map(i => (
+                      <option key={i.id} value={i.id}>{i.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={profile?.institution_ref_detail?.name || "N/A"}
+                    disabled
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -915,6 +1057,16 @@ export default function SupervisorDetailPage() {
         }
         .btn-reset-action:hover {
           background: rgba(255, 255, 255, 0.12);
+        }
+        .badge-complete {
+          background: rgba(100, 255, 100, 0.15);
+          color: #a3ffa3;
+          border: 1px solid rgba(100, 255, 100, 0.3);
+        }
+        .badge-incomplete {
+          background: rgba(255, 150, 100, 0.15);
+          color: #ffdca3;
+          border: 1px solid rgba(255, 150, 100, 0.3);
         }
         .panel-footer {
           margin-top: 2rem;

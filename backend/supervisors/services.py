@@ -134,6 +134,12 @@ def create_supervisor_with_user(
             notes=profile_data.get("notes", ""),
             extra_data=profile_data.get("extra_data", {}),
             created_by=created_by,
+            institution_ref=profile_data.get("institution_ref"),
+            training_site_ref=profile_data.get("training_site_ref"),
+            department_ref=profile_data.get("department_ref"),
+            program_ref=profile_data.get("program_ref"),
+            specialty_ref=profile_data.get("specialty_ref"),
+            designation_ref=profile_data.get("designation_ref"),
         )
         profile.save()
 

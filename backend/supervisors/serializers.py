@@ -7,6 +7,14 @@ from rest_framework import serializers
 
 from supervisors.models import SupervisorProfile
 from supervisors.services import create_supervisor_with_user, validate_supervisor_uniqueness
+from masters.serializers import (
+    InstitutionSerializer,
+    TrainingSiteSerializer,
+    DepartmentSerializer,
+    ProgramSerializer,
+    SpecialtySerializer,
+    DesignationSerializer,
+)
 
 User = get_user_model()
 
@@ -20,6 +28,16 @@ class NestedUserSerializer(serializers.ModelSerializer):
 
 class SupervisorProfileSerializer(serializers.ModelSerializer):
     user = NestedUserSerializer(read_only=True)
+
+    # Master details fields
+    institution_ref_detail = InstitutionSerializer(source="institution_ref", read_only=True)
+    training_site_ref_detail = TrainingSiteSerializer(source="training_site_ref", read_only=True)
+    department_ref_detail = DepartmentSerializer(source="department_ref", read_only=True)
+    program_ref_detail = ProgramSerializer(source="program_ref", read_only=True)
+    specialty_ref_detail = SpecialtySerializer(source="specialty_ref", read_only=True)
+    designation_ref_detail = DesignationSerializer(source="designation_ref", read_only=True)
+
+    identity_status = serializers.SerializerMethodField()
 
     class Meta:
         model = SupervisorProfile
@@ -54,6 +72,23 @@ class SupervisorProfileSerializer(serializers.ModelSerializer):
             "updated_by",
             "created_at",
             "updated_at",
+
+            # Master keys
+            "institution_ref",
+            "training_site_ref",
+            "department_ref",
+            "program_ref",
+            "specialty_ref",
+            "designation_ref",
+
+            # Master details
+            "institution_ref_detail",
+            "training_site_ref_detail",
+            "department_ref_detail",
+            "program_ref_detail",
+            "specialty_ref_detail",
+            "designation_ref_detail",
+            "identity_status",
         ]
         read_only_fields = [
             "id",
@@ -67,7 +102,17 @@ class SupervisorProfileSerializer(serializers.ModelSerializer):
             "updated_by",
             "created_at",
             "updated_at",
+            "identity_status",
         ]
+
+    def get_identity_status(self, obj: SupervisorProfile) -> str:
+        if (
+            obj.training_site_ref_id
+            and obj.department_ref_id
+            and obj.designation_ref_id
+        ):
+            return "COMPLETE"
+        return "INCOMPLETE"
 
     def update(self, instance: SupervisorProfile, validated_data: dict[str, Any]) -> SupervisorProfile:
         request = self.context.get("request")
@@ -113,8 +158,6 @@ class SupervisorProfileSerializer(serializers.ModelSerializer):
             user_modified = True
         if user_email is not None:
             user.email = user_email
-            instance.official_email = user_email
-            instance.save()
             user_modified = True
         if user_is_active is not None:
             user.is_active = user_is_active
@@ -159,7 +202,25 @@ class SupervisorCreateSerializer(serializers.ModelSerializer):
             "can_supervise_clinical_training",
             "notes",
             "extra_data",
+
+            # Master references required at creation
+            "institution_ref",
+            "training_site_ref",
+            "department_ref",
+            "program_ref",
+            "specialty_ref",
+            "designation_ref",
         ]
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        # Required master fields for new supervisor profile setup:
+        if not attrs.get("training_site_ref"):
+            raise serializers.ValidationError({"training_site_ref": "Hospital is required for new supervisors."})
+        if not attrs.get("department_ref"):
+            raise serializers.ValidationError({"department_ref": "Department / Discipline is required for new supervisors."})
+        if not attrs.get("designation_ref"):
+            raise serializers.ValidationError({"designation_ref": "Designation is required for new supervisors."})
+        return attrs
 
     def create(self, validated_data: dict[str, Any]) -> SupervisorProfile:
         user_fields = ["username", "email", "full_name", "phone", "password"]

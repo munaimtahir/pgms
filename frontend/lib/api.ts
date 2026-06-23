@@ -63,6 +63,23 @@ export interface ResidentProfile {
   updated_by: number | null;
   created_at: string;
   updated_at: string;
+
+  // Master References
+  institution_ref?: number;
+  training_site_ref?: number;
+  department_ref?: number;
+  program_ref?: number;
+  specialty_ref?: number;
+  academic_session_ref?: number;
+
+  // Master Details
+  institution_ref_detail?: any;
+  training_site_ref_detail?: any;
+  department_ref_detail?: any;
+  program_ref_detail?: any;
+  specialty_ref_detail?: any;
+  academic_session_ref_detail?: any;
+  identity_status: "COMPLETE" | "INCOMPLETE";
 }
 
 export interface SupervisorProfile {
@@ -96,6 +113,23 @@ export interface SupervisorProfile {
   updated_by: number | null;
   created_at: string;
   updated_at: string;
+
+  // Master References
+  institution_ref?: number;
+  training_site_ref?: number;
+  department_ref?: number;
+  program_ref?: number;
+  specialty_ref?: number;
+  designation_ref?: number;
+
+  // Master Details
+  institution_ref_detail?: any;
+  training_site_ref_detail?: any;
+  department_ref_detail?: any;
+  program_ref_detail?: any;
+  specialty_ref_detail?: any;
+  designation_ref_detail?: any;
+  identity_status: "COMPLETE" | "INCOMPLETE";
 }
 
 export async function apiRequest(path: string, options: RequestInit = {}): Promise<Response> {

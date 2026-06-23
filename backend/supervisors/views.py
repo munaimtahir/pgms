@@ -3,14 +3,15 @@ from __future__ import annotations
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
-from rest_framework import permissions, status, viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 
 from accounts.permissions import EnforceUserStatusPermission
 from audit.utils import log_audit
 from supervisors.models import SupervisorProfile
-from supervisors.permissions import SupervisorDirectoryPermission
+from access.permissions import ScopedAccessControlPermission, get_scoped_queryset, check_write_scope_permission
 from supervisors.serializers import (
     DuplicateCheckSerializer,
     SupervisorCreateSerializer,
@@ -23,14 +24,14 @@ User = get_user_model()
 class SupervisorViewSet(viewsets.ModelViewSet):
     """
     ViewSet for managing Supervisor Profiles.
-    - UTRMC_ADMIN: Full access.
-    - SUPPORT_STAFF: View list/detail only.
+    - UTRMC_ADMIN / UTRMC_ADMIN_ACCESS role: Full access.
+    - Other active roles: Scoped view & update capability.
     - SUPERVISOR: View/update own profile details only.
-    - RESIDENT: Blocked completely in Brick 3.
+    - RESIDENT: Blocked unless delegated access exists.
     """
 
     queryset = SupervisorProfile.objects.all().order_by("-created_at")
-    permission_classes = [SupervisorDirectoryPermission, EnforceUserStatusPermission]
+    permission_classes = [ScopedAccessControlPermission, EnforceUserStatusPermission]
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -41,30 +42,56 @@ class SupervisorViewSet(viewsets.ModelViewSet):
         queryset = SupervisorProfile.objects.all().order_by("-created_at")
         user = self.request.user
 
-        # 1. Access Control Filter
+        # Apply Scoped Access Queryset Filtering
+        queryset = get_scoped_queryset(user, queryset)
+
+        # Access Control Filter
         if user.user_category == "SUPERVISOR":
             queryset = queryset.filter(user=user)
         elif user.user_category == "RESIDENT":
-            queryset = queryset.none()
+            from access.models import UserRoleAssignment
+            # Residents without role assignments are restricted from viewing list
+            if not UserRoleAssignment.objects.filter(user=user, is_active=True).exists():
+                queryset = queryset.none()
 
-        # 2. Archive Filtering
+        # Archive Filtering
         is_archived = self.request.query_params.get("is_archived")
         if self.action == "unarchive":
-            # Allow retrieving the archived profile to restore it
             pass
         elif is_archived is not None:
-            if user.user_category in {"UTRMC_ADMIN", "SUPPORT_STAFF"}:
+            if user.user_category in {"UTRMC_ADMIN", "SUPPORT_STAFF"} or UserRoleAssignment.objects.filter(user=user, is_active=True).exists():
                 queryset = queryset.filter(is_archived=is_archived.lower() in {"1", "true", "yes"})
             else:
                 queryset = queryset.filter(is_archived=False)
         else:
             queryset = queryset.filter(is_archived=False)
 
-        # 3. Dynamic Search and Filters
+        # Dynamic Search and Filters (Master FKs & Text Fallbacks)
         supervision_status = self.request.query_params.get("supervision_status")
         if supervision_status:
             queryset = queryset.filter(supervision_status=supervision_status)
 
+        # Labeled Hospital (Mapping internally to training_site_ref)
+        hospital = self.request.query_params.get("hospital") or self.request.query_params.get("training_site_ref")
+        if hospital:
+            queryset = queryset.filter(training_site_ref_id=hospital)
+
+        # Labeled Department / Discipline (Mapping internally to department_ref)
+        department = self.request.query_params.get("department") or self.request.query_params.get("department_ref")
+        if department:
+            queryset = queryset.filter(department_ref_id=department)
+
+        # Designation
+        designation_ref = self.request.query_params.get("designation_ref")
+        if designation_ref:
+            queryset = queryset.filter(designation_ref_id=designation_ref)
+
+        # Institution
+        institution = self.request.query_params.get("institution") or self.request.query_params.get("institution_ref")
+        if institution:
+            queryset = queryset.filter(institution_ref_id=institution)
+
+        # Text filters fallback
         designation = self.request.query_params.get("designation")
         if designation:
             queryset = queryset.filter(designation__icontains=designation)
@@ -96,10 +123,42 @@ class SupervisorViewSet(viewsets.ModelViewSet):
 
         return queryset
 
+    def perform_create(self, serializer):
+        user = self.request.user
+        proposed_data = {
+            "institution_ref": serializer.validated_data.get("institution_ref"),
+            "training_site_ref": serializer.validated_data.get("training_site_ref"),
+            "department_ref": serializer.validated_data.get("department_ref"),
+            "program_ref": serializer.validated_data.get("program_ref"),
+            "specialty_ref": serializer.validated_data.get("specialty_ref"),
+            "designation_ref": serializer.validated_data.get("designation_ref"),
+        }
+
+        # Validate writing permissions for target scopes
+        if not check_write_scope_permission(user, proposed_data):
+            raise PermissionDenied("You do not have permission to create records in this scope.")
+
+        serializer.save()
+
     def perform_update(self, serializer):
         instance = self.get_object()
-        
-        # Serialize fields before change
+        user = self.request.user
+
+        proposed_data = {
+            "institution_ref": serializer.validated_data.get("institution_ref", instance.institution_ref),
+            "training_site_ref": serializer.validated_data.get("training_site_ref", instance.training_site_ref),
+            "department_ref": serializer.validated_data.get("department_ref", instance.department_ref),
+            "program_ref": serializer.validated_data.get("program_ref", instance.program_ref),
+            "specialty_ref": serializer.validated_data.get("specialty_ref", instance.specialty_ref),
+            "designation_ref": serializer.validated_data.get("designation_ref", instance.designation_ref),
+        }
+
+        # Skip scope checks for RESIDENT/SUPERVISOR updating themselves
+        is_self = user.user_category in {"RESIDENT", "SUPERVISOR"} and instance.user == user
+
+        if not is_self and not check_write_scope_permission(user, proposed_data):
+            raise PermissionDenied("You do not have permission to update records in this scope.")
+
         from django.forms import model_to_dict
         before = model_to_dict(instance)
         before["user"] = instance.user.pk
@@ -132,13 +191,13 @@ class SupervisorViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         before = {"is_archived": instance.is_archived, "user_is_active": instance.user.is_active}
 
-        # 1. Update Profile is_archived
+        # Update Profile is_archived
         instance.is_archived = True
         instance.archived_at = timezone.now()
         instance.archived_by = request.user
         instance.save()
 
-        # 2. Deactivate Linked User Account
+        # Deactivate Linked User Account
         user = instance.user
         user.is_active = False
         user.save()
@@ -172,13 +231,13 @@ class SupervisorViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         before = {"is_archived": instance.is_archived, "user_is_active": instance.user.is_active}
 
-        # 1. Reset Archive flags
+        # Reset Archive flags
         instance.is_archived = False
         instance.archived_at = None
         instance.archived_by = None
         instance.save()
 
-        # 2. Re-enable User Account
+        # Re-enable User Account
         user = instance.user
         user.is_active = True
         user.save()

@@ -162,3 +162,27 @@ class AcademicSessionViewSet(BaseMasterViewSet):
     queryset = AcademicSession.objects.all().order_by("sort_order", "name")
     serializer_class = AcademicSessionSerializer
     model_name = "AcademicSession"
+
+
+from rest_framework.views import APIView
+
+class IdentityOptionsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request) -> Response:
+        institutions = Institution.objects.filter(is_active=True).order_by("sort_order", "name")
+        hospitals = TrainingSite.objects.filter(is_active=True).order_by("sort_order", "name")
+        departments = Department.objects.filter(is_active=True).order_by("sort_order", "name")
+        programs = Program.objects.filter(is_active=True).order_by("sort_order", "name")
+        academic_sessions = AcademicSession.objects.filter(is_active=True).order_by("sort_order", "name")
+        designations = Designation.objects.filter(is_active=True).order_by("sort_order", "name")
+
+        return Response({
+            "institutions": InstitutionSerializer(institutions, many=True).data,
+            "hospitals": TrainingSiteSerializer(hospitals, many=True).data,
+            "departments": DepartmentSerializer(departments, many=True).data,
+            "programs": ProgramSerializer(programs, many=True).data,
+            "academic_sessions": AcademicSessionSerializer(academic_sessions, many=True).data,
+            "designations": DesignationSerializer(designations, many=True).data,
+        })
+

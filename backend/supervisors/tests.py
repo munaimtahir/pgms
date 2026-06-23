@@ -13,6 +13,7 @@ from rest_framework.test import APITestCase
 from audit.models import AuditLog
 from supervisors.models import SupervisorProfile
 from supervisors.services import create_supervisor_with_user, validate_supervisor_uniqueness
+from access.models import UserRoleAssignment
 
 User = get_user_model()
 
@@ -154,6 +155,20 @@ class SupervisorAPIPermissionTests(APITestCase):
         self.support = User.objects.create_user(username="support_api_sup", password="password", user_category="SUPPORT_STAFF", is_profile_complete=True, must_change_password=False)
         self.resident = User.objects.create_user(username="resident_api_sup", password="password", user_category="RESIDENT", is_profile_complete=True, must_change_password=False)
         
+        # Setup master metadata
+        from masters.models import Institution, TrainingSite, Department, Designation
+        self.inst = Institution.objects.create(name="FMU", code="FMU")
+        self.site = TrainingSite.objects.create(name="Allied Hospital", code="AH", institution=self.inst)
+        self.dept = Department.objects.create(name="Cardiology", code="CARD", training_site=self.site)
+        self.desig = Designation.objects.create(name="Professor", code="PROF")
+
+        # Setup support staff scope
+        UserRoleAssignment.objects.create(
+            user=self.support,
+            role=UserRoleAssignment.Role.SUPPORT_STAFF_ACCESS,
+            scope_type=UserRoleAssignment.ScopeType.GLOBAL,
+        )
+
         # Create a supervisor with profile
         user_data = {
             "username": "supervisor_api",
@@ -165,6 +180,9 @@ class SupervisorAPIPermissionTests(APITestCase):
         profile_data = {
             "pmdc_number": "12345-S",
             "designation": "Professor",
+            "training_site_ref": self.site,
+            "department_ref": self.dept,
+            "designation_ref": self.desig,
         }
         self.supervisor_profile = create_supervisor_with_user(user_data, profile_data)
         self.supervisor_user = self.supervisor_profile.user
@@ -202,6 +220,9 @@ class SupervisorAPIPermissionTests(APITestCase):
             "full_name": "New API Supervisor",
             "phone": "03009876543",
             "pmdc_number": "99999-S",
+            "training_site_ref": self.site.pk,
+            "department_ref": self.dept.pk,
+            "designation_ref": self.desig.pk,
         }
         response = self.client.post(self.list_url, create_payload, format="json", **headers)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)

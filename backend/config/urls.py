@@ -22,8 +22,9 @@ from masters.views import (
     SpecialtyViewSet,
     DesignationViewSet,
     AcademicSessionViewSet,
+    IdentityOptionsView,
 )
-from access.views import UserRoleAssignmentViewSet
+from access.views import UserRoleAssignmentViewSet, MyScopeView
 
 
 def health_view(_request):
@@ -31,7 +32,7 @@ def health_view(_request):
         {
             "status": "ok",
             "service": "pgms-backend",
-            "brick": "4",
+            "brick": "5",
         }
     )
 
@@ -62,6 +63,8 @@ urlpatterns = [
     path("api/auth/me/", MeView.as_view(), name="auth-me"),
     path("api/auth/complete-profile/", CompleteProfileView.as_view(), name="auth-complete-profile"),
     path("api/auth/change-password/", ChangePasswordView.as_view(), name="auth-change-password"),
+    path("api/identity/options/", IdentityOptionsView.as_view(), name="identity-options"),
+    path("api/access/my-scope/", MyScopeView.as_view(), name="my-scope"),
     path("api/", include(router.urls)),
 ]
 

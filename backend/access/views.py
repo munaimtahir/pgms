@@ -118,3 +118,19 @@ class UserRoleAssignmentViewSet(viewsets.ModelViewSet):
             {"message": "Role assignment deactivated successfully."},
             status=status.HTTP_200_OK,
         )
+
+
+from rest_framework.views import APIView
+
+class MyScopeView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request) -> Response:
+        user = request.user
+        assignments = UserRoleAssignment.objects.filter(user=user, is_active=True)
+        from access.serializers import UserRoleAssignmentSerializer
+        return Response({
+            "user_category": user.user_category,
+            "roles": UserRoleAssignmentSerializer(assignments, many=True).data,
+        })
+

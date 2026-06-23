@@ -8,6 +8,14 @@ from rest_framework import serializers
 from accounts.serializers import UserSerializer
 from residents.models import ResidentProfile
 from residents.services import create_resident_with_user, validate_resident_uniqueness
+from masters.serializers import (
+    InstitutionSerializer,
+    TrainingSiteSerializer,
+    DepartmentSerializer,
+    ProgramSerializer,
+    SpecialtySerializer,
+    AcademicSessionSerializer,
+)
 
 User = get_user_model()
 
@@ -21,6 +29,16 @@ class NestedUserSerializer(serializers.ModelSerializer):
 
 class ResidentProfileSerializer(serializers.ModelSerializer):
     user = NestedUserSerializer(read_only=True)
+
+    # Master details fields
+    institution_ref_detail = InstitutionSerializer(source="institution_ref", read_only=True)
+    training_site_ref_detail = TrainingSiteSerializer(source="training_site_ref", read_only=True)
+    department_ref_detail = DepartmentSerializer(source="department_ref", read_only=True)
+    program_ref_detail = ProgramSerializer(source="program_ref", read_only=True)
+    specialty_ref_detail = SpecialtySerializer(source="specialty_ref", read_only=True)
+    academic_session_ref_detail = AcademicSessionSerializer(source="academic_session_ref", read_only=True)
+    
+    identity_status = serializers.SerializerMethodField()
 
     class Meta:
         model = ResidentProfile
@@ -62,6 +80,23 @@ class ResidentProfileSerializer(serializers.ModelSerializer):
             "updated_by",
             "created_at",
             "updated_at",
+
+            # Master keys
+            "institution_ref",
+            "training_site_ref",
+            "department_ref",
+            "program_ref",
+            "specialty_ref",
+            "academic_session_ref",
+
+            # Master detail representations
+            "institution_ref_detail",
+            "training_site_ref_detail",
+            "department_ref_detail",
+            "program_ref_detail",
+            "specialty_ref_detail",
+            "academic_session_ref_detail",
+            "identity_status",
         ]
         read_only_fields = [
             "id",
@@ -75,7 +110,18 @@ class ResidentProfileSerializer(serializers.ModelSerializer):
             "updated_by",
             "created_at",
             "updated_at",
+            "identity_status",
         ]
+
+    def get_identity_status(self, obj: ResidentProfile) -> str:
+        if (
+            obj.training_site_ref_id
+            and obj.department_ref_id
+            and obj.program_ref_id
+            and obj.academic_session_ref_id
+        ):
+            return "COMPLETE"
+        return "INCOMPLETE"
 
     def update(self, instance: ResidentProfile, validated_data: dict[str, Any]) -> ResidentProfile:
         request = self.context.get("request")
@@ -96,27 +142,16 @@ class ResidentProfileSerializer(serializers.ModelSerializer):
         except DjangoValidationError as e:
             raise serializers.ValidationError(e.message_dict)
 
-        # Map updates also to User model contact fields if modified
-        user = instance.user
-        user_modified = False
-
-        if "email" in validated_data:
-            user.email = validated_data["email"]
-            user_modified = True
-
         # Write updates to profile instance
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-
-        # Synchronize primary contact fields on User
-        if "full_name" in validated_data or "primary_phone" in validated_data:
-            # Let's check if they updated contact info
-            pass
 
         instance.updated_by = updated_by
         instance.save()
 
         # Update User object fields if necessary
+        user = instance.user
+        user_modified = False
         user_full_name = request.data.get("user.full_name") if request else None
         user_phone = request.data.get("user.phone") if request else None
         user_email = request.data.get("user.email") if request else None
@@ -184,7 +219,27 @@ class ResidentCreateSerializer(serializers.ModelSerializer):
             "emergency_contact_relation",
             "notes",
             "extra_data",
+
+            # Master references required at creation
+            "institution_ref",
+            "training_site_ref",
+            "department_ref",
+            "program_ref",
+            "specialty_ref",
+            "academic_session_ref",
         ]
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        # Required master fields for new resident profile setup:
+        if not attrs.get("training_site_ref"):
+            raise serializers.ValidationError({"training_site_ref": "Hospital is required for new residents."})
+        if not attrs.get("department_ref"):
+            raise serializers.ValidationError({"department_ref": "Department / Discipline is required for new residents."})
+        if not attrs.get("program_ref"):
+            raise serializers.ValidationError({"program_ref": "Program is required for new residents."})
+        if not attrs.get("academic_session_ref"):
+            raise serializers.ValidationError({"academic_session_ref": "Session is required for new residents."})
+        return attrs
 
     def create(self, validated_data: dict[str, Any]) -> ResidentProfile:
         user_fields = ["username", "email", "full_name", "phone", "password"]

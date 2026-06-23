@@ -27,6 +27,41 @@ export default function NewSupervisorPage() {
   const [departmentName, setDepartmentName] = useState("");
   const [programName, setProgramName] = useState("");
 
+  const [trainingSiteRef, setTrainingSiteRef] = useState("");
+  const [departmentRef, setDepartmentRef] = useState("");
+  const [designationRef, setDesignationRef] = useState("");
+  const [programRef, setProgramRef] = useState("");
+  const [institutionRef, setInstitutionRef] = useState("");
+
+  const [options, setOptions] = useState<{
+    institutions: any[];
+    hospitals: any[];
+    departments: any[];
+    programs: any[];
+    designations: any[];
+  }>({
+    institutions: [],
+    hospitals: [],
+    departments: [],
+    programs: [],
+    designations: [],
+  });
+
+  React.useEffect(() => {
+    async function loadOptions() {
+      try {
+        const res = await apiRequest("/identity/options/");
+        const data = await res.json();
+        if (res.status === 200) {
+          setOptions(data);
+        }
+      } catch (err) {
+        console.error("Failed to load options", err);
+      }
+    }
+    loadOptions();
+  }, []);
+
   const [alternatePhone, setAlternatePhone] = useState("");
   const [roomOrOffice, setRoomOrOffice] = useState("");
   const [availabilityNotes, setAvailabilityNotes] = useState("");
@@ -75,8 +110,8 @@ export default function NewSupervisorPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !fullName || !phone) {
-      setError("Please fill in all required fields (Username, Full Name, and Contact Phone).");
+    if (!username || !fullName || !phone || !trainingSiteRef || !departmentRef || !designationRef) {
+      setError("Please fill in all required fields and selections (Username, Full Name, Contact Phone, Hospital, Department / Discipline, and Designation).");
       return;
     }
 
@@ -105,6 +140,12 @@ export default function NewSupervisorPage() {
       can_supervise_thesis: canSuperviseThesis,
       can_supervise_clinical_training: canSuperviseClinicalTraining,
       notes,
+
+      training_site_ref: Number(trainingSiteRef),
+      department_ref: Number(departmentRef),
+      designation_ref: Number(designationRef),
+      program_ref: programRef ? Number(programRef) : null,
+      institution_ref: institutionRef ? Number(institutionRef) : null,
     };
 
     try {
@@ -243,14 +284,23 @@ export default function NewSupervisorPage() {
             <h3 className="section-title">2. Professional Details</h3>
             <div className="form-grid">
               <div className="form-group">
-                <label htmlFor="designation">Designation</label>
-                <input
-                  type="text"
+                <label htmlFor="designation">Designation *</label>
+                <select
                   id="designation"
-                  value={designation}
-                  onChange={(e) => setDesignation(e.target.value)}
-                  placeholder="e.g. Associate Professor"
-                />
+                  value={designationRef}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setDesignationRef(val);
+                    const selected = options.designations.find(d => d.id.toString() === val);
+                    setDesignation(selected ? selected.name : "");
+                  }}
+                  required
+                >
+                  <option value="">Select Designation</option>
+                  {options.designations.map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="form-group">
@@ -303,39 +353,82 @@ export default function NewSupervisorPage() {
 
           {/* Section: Institutional Scope */}
           <div className="form-section">
-            <h3 className="section-title">3. Department & Institution (Text)</h3>
+            <h3 className="section-title">3. Department & Institution / Master references</h3>
             <div className="form-grid">
               <div className="form-group">
-                <label htmlFor="inst">Hospital / Training Site</label>
-                <input
-                  type="text"
-                  id="inst"
-                  value={institutionName}
-                  onChange={(e) => setInstitutionName(e.target.value)}
-                  placeholder="e.g. Allied Hospital"
-                />
+                <label htmlFor="hospitalSelect">Hospital / Training Site *</label>
+                <select
+                  id="hospitalSelect"
+                  value={trainingSiteRef}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setTrainingSiteRef(val);
+                    const selected = options.hospitals.find(h => h.id.toString() === val);
+                    setInstitutionName(selected ? selected.name : "");
+                  }}
+                  required
+                >
+                  <option value="">Select Hospital</option>
+                  {options.hospitals.map(h => (
+                    <option key={h.id} value={h.id}>{h.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="form-group">
-                <label htmlFor="dept">Department Name</label>
-                <input
-                  type="text"
-                  id="dept"
-                  value={departmentName}
-                  onChange={(e) => setDepartmentName(e.target.value)}
-                  placeholder="e.g. Medicine Unit II"
-                />
+                <label htmlFor="departmentSelect">Department / Discipline *</label>
+                <select
+                  id="departmentSelect"
+                  value={departmentRef}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setDepartmentRef(val);
+                    const selected = options.departments.find(d => d.id.toString() === val);
+                    setDepartmentName(selected ? selected.name : "");
+                  }}
+                  required
+                >
+                  <option value="">Select Department / Discipline</option>
+                  {options.departments.map(d => (
+                    <option key={d.id} value={d.id}>{d.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="form-group">
-                <label htmlFor="program">Associated Program Name</label>
-                <input
-                  type="text"
-                  id="program"
-                  value={programName}
-                  onChange={(e) => setProgramName(e.target.value)}
-                  placeholder="e.g. MD Cardiology"
-                />
+                <label htmlFor="programSelect">Program (Optional)</label>
+                <select
+                  id="programSelect"
+                  value={programRef}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setProgramRef(val);
+                    const selected = options.programs.find(p => p.id.toString() === val);
+                    setProgramName(selected ? selected.name : "");
+                  }}
+                >
+                  <option value="">Select Program</option>
+                  {options.programs.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="institutionSelect">Institution (Optional)</label>
+                <select
+                  id="institutionSelect"
+                  value={institutionRef}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setInstitutionRef(val);
+                  }}
+                >
+                  <option value="">Select Institution</option>
+                  {options.institutions.map(i => (
+                    <option key={i.id} value={i.id}>{i.name}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>

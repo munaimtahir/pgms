@@ -15,20 +15,52 @@ export default function ResidentsDirectoryPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [programFilter, setProgramFilter] = useState("");
-  const [specialtyFilter, setSpecialtyFilter] = useState("");
   const [institutionFilter, setInstitutionFilter] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
+  const [hospitalFilter, setHospitalFilter] = useState("");
+  const [sessionFilter, setSessionFilter] = useState("");
   const [trainingYearFilter, setTrainingYearFilter] = useState("");
   const [archivedFilter, setArchivedFilter] = useState("false");
+
+  // Options state
+  const [options, setOptions] = useState<{
+    institutions: any[];
+    hospitals: any[];
+    departments: any[];
+    programs: any[];
+    academic_sessions: any[];
+  }>({
+    institutions: [],
+    hospitals: [],
+    departments: [],
+    programs: [],
+    academic_sessions: [],
+  });
+
+  useEffect(() => {
+    async function loadOptions() {
+      try {
+        const res = await apiRequest("/identity/options/");
+        const data = await res.json();
+        if (res.status === 200) {
+          setOptions(data);
+        }
+      } catch (err) {
+        console.error("Failed to load options", err);
+      }
+    }
+    loadOptions();
+  }, []);
 
   useEffect(() => {
     fetchResidents();
   }, [
     statusFilter,
     programFilter,
-    specialtyFilter,
     institutionFilter,
     departmentFilter,
+    hospitalFilter,
+    sessionFilter,
     trainingYearFilter,
     archivedFilter,
   ]);
@@ -43,10 +75,11 @@ export default function ResidentsDirectoryPage() {
       if (querySearch) params.append("search", querySearch);
       
       if (statusFilter) params.append("current_status", statusFilter);
-      if (programFilter) params.append("program_name", programFilter);
-      if (specialtyFilter) params.append("specialty_name", specialtyFilter);
-      if (institutionFilter) params.append("institution_name", institutionFilter);
-      if (departmentFilter) params.append("department_name", departmentFilter);
+      if (programFilter) params.append("program", programFilter);
+      if (institutionFilter) params.append("institution", institutionFilter);
+      if (departmentFilter) params.append("department", departmentFilter);
+      if (hospitalFilter) params.append("hospital", hospitalFilter);
+      if (sessionFilter) params.append("session", sessionFilter);
       if (trainingYearFilter) params.append("training_year", trainingYearFilter);
       
       if (user?.user_category === "UTRMC_ADMIN" || user?.user_category === "SUPPORT_STAFF") {
@@ -147,43 +180,53 @@ export default function ResidentsDirectoryPage() {
             </div>
 
             <div className="filter-group">
+              <label>Hospital</label>
+              <select value={hospitalFilter} onChange={(e) => setHospitalFilter(e.target.value)}>
+                <option value="">All Hospitals</option>
+                {options.hospitals.map((h) => (
+                  <option key={h.id} value={h.id}>{h.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>Department / Discipline</label>
+              <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)}>
+                <option value="">All Depts</option>
+                {options.departments.map((d) => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
               <label>Program</label>
-              <input
-                type="text"
-                placeholder="e.g. FCPS"
-                value={programFilter}
-                onChange={(e) => setProgramFilter(e.target.value)}
-              />
+              <select value={programFilter} onChange={(e) => setProgramFilter(e.target.value)}>
+                <option value="">All Programs</option>
+                {options.programs.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
             </div>
 
             <div className="filter-group">
-              <label>Specialty</label>
-              <input
-                type="text"
-                placeholder="e.g. Cardiology"
-                value={specialtyFilter}
-                onChange={(e) => setSpecialtyFilter(e.target.value)}
-              />
+              <label>Session</label>
+              <select value={sessionFilter} onChange={(e) => setSessionFilter(e.target.value)}>
+                <option value="">All Sessions</option>
+                {options.academic_sessions.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
             </div>
 
             <div className="filter-group">
-              <label>Institution</label>
-              <input
-                type="text"
-                placeholder="e.g. FMU"
-                value={institutionFilter}
-                onChange={(e) => setInstitutionFilter(e.target.value)}
-              />
-            </div>
-
-            <div className="filter-group">
-              <label>Department</label>
-              <input
-                type="text"
-                placeholder="e.g. Pediatrics"
-                value={departmentFilter}
-                onChange={(e) => setDepartmentFilter(e.target.value)}
-              />
+              <label>Institution / Awarding Body</label>
+              <select value={institutionFilter} onChange={(e) => setInstitutionFilter(e.target.value)}>
+                <option value="">All Institutions</option>
+                {options.institutions.map((i) => (
+                  <option key={i.id} value={i.id}>{i.name}</option>
+                ))}
+              </select>
             </div>
 
             <div className="filter-group">
@@ -227,8 +270,9 @@ export default function ResidentsDirectoryPage() {
                 <tr>
                   <th>Resident</th>
                   <th>PMDC</th>
-                  <th>Program / Specialty</th>
+                  <th>Program / Session</th>
                   <th>Hospital & Dept</th>
+                  <th>Identity</th>
                   <th>Status</th>
                   {canCreateOrEdit && <th className="actions-header">Actions</th>}
                 </tr>
@@ -236,7 +280,7 @@ export default function ResidentsDirectoryPage() {
               <tbody>
                 {residents.length === 0 ? (
                   <tr>
-                    <td colSpan={canCreateOrEdit ? 6 : 5} className="empty-row">
+                    <td colSpan={canCreateOrEdit ? 7 : 6} className="empty-row">
                       No residents matching the criteria found.
                     </td>
                   </tr>
@@ -252,15 +296,20 @@ export default function ResidentsDirectoryPage() {
                       <td className="pmdc-col">{r.pmdc_number || <span className="muted-text">—</span>}</td>
                       <td>
                         <div className="res-details">
-                          <span className="res-program">{r.program_name || "N/A"}</span>
-                          <span className="res-specialty">{r.specialty_name || "N/A"}</span>
+                          <span className="res-program">{r.program_ref_detail?.name || r.program_name || "N/A"}</span>
+                          <span className="res-specialty">{r.academic_session_ref_detail?.name || r.session_year || "N/A"}</span>
                         </div>
                       </td>
                       <td>
                         <div className="res-details">
-                          <span className="res-inst">{r.institution_name || "N/A"}</span>
-                          <span className="res-dept">{r.department_name || "N/A"}</span>
+                          <span className="res-inst">{r.training_site_ref_detail?.name || r.institution_name || "N/A"}</span>
+                          <span className="res-dept">{r.department_ref_detail?.name || r.department_name || "N/A"}</span>
                         </div>
+                      </td>
+                      <td>
+                        <span className={`status-badge badge-${r.identity_status.toLowerCase()}`}>
+                          {r.identity_status}
+                        </span>
                       </td>
                       <td>
                         <span className={`status-badge badge-${r.current_status.toLowerCase()}`}>
@@ -541,6 +590,16 @@ export default function ResidentsDirectoryPage() {
           background: rgba(255, 100, 100, 0.15);
           color: #ff8080;
           border: 1px solid rgba(255, 100, 100, 0.3);
+        }
+        .badge-complete {
+          background: rgba(100, 255, 100, 0.15);
+          color: #a3ffa3;
+          border: 1px solid rgba(100, 255, 100, 0.3);
+        }
+        .badge-incomplete {
+          background: rgba(255, 150, 100, 0.15);
+          color: #ffdca3;
+          border: 1px solid rgba(255, 150, 100, 0.3);
         }
         .archive-badge {
           display: inline-block;

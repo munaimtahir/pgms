@@ -19,7 +19,38 @@ export default function SupervisorsDirectoryPage() {
   const [specialtyFilter, setSpecialtyFilter] = useState("");
   const [institutionFilter, setInstitutionFilter] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
+  const [hospitalFilter, setHospitalFilter] = useState("");
   const [archivedFilter, setArchivedFilter] = useState("false");
+
+  // Options state
+  const [options, setOptions] = useState<{
+    institutions: any[];
+    hospitals: any[];
+    departments: any[];
+    programs: any[];
+    designations: any[];
+  }>({
+    institutions: [],
+    hospitals: [],
+    departments: [],
+    programs: [],
+    designations: [],
+  });
+
+  useEffect(() => {
+    async function loadOptions() {
+      try {
+        const res = await apiRequest("/identity/options/");
+        const data = await res.json();
+        if (res.status === 200) {
+          setOptions(data);
+        }
+      } catch (err) {
+        console.error("Failed to load options", err);
+      }
+    }
+    loadOptions();
+  }, []);
 
   useEffect(() => {
     fetchSupervisors();
@@ -30,6 +61,7 @@ export default function SupervisorsDirectoryPage() {
     specialtyFilter,
     institutionFilter,
     departmentFilter,
+    hospitalFilter,
     archivedFilter,
   ]);
 
@@ -43,11 +75,12 @@ export default function SupervisorsDirectoryPage() {
       if (querySearch) params.append("search", querySearch);
       
       if (statusFilter) params.append("supervision_status", statusFilter);
-      if (designationFilter) params.append("designation", designationFilter);
+      if (designationFilter) params.append("designation_ref", designationFilter);
       if (programFilter) params.append("program_name", programFilter);
       if (specialtyFilter) params.append("specialty_name", specialtyFilter);
-      if (institutionFilter) params.append("institution_name", institutionFilter);
-      if (departmentFilter) params.append("department_name", departmentFilter);
+      if (institutionFilter) params.append("institution_ref", institutionFilter);
+      if (departmentFilter) params.append("department_ref", departmentFilter);
+      if (hospitalFilter) params.append("hospital", hospitalFilter);
       
       if (user?.user_category === "UTRMC_ADMIN" || user?.user_category === "SUPPORT_STAFF") {
         params.append("is_archived", archivedFilter);
@@ -146,14 +179,34 @@ export default function SupervisorsDirectoryPage() {
               </select>
             </div>
 
-            <div className="filter-group">
+             <div className="filter-group">
               <label>Designation</label>
-              <input
-                type="text"
-                placeholder="e.g. Professor"
-                value={designationFilter}
-                onChange={(e) => setDesignationFilter(e.target.value)}
-              />
+              <select value={designationFilter} onChange={(e) => setDesignationFilter(e.target.value)}>
+                <option value="">All Designations</option>
+                {options.designations.map((d) => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>Hospital</label>
+              <select value={hospitalFilter} onChange={(e) => setHospitalFilter(e.target.value)}>
+                <option value="">All Hospitals</option>
+                {options.hospitals.map((h) => (
+                  <option key={h.id} value={h.id}>{h.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>Department / Discipline</label>
+              <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)}>
+                <option value="">All Depts</option>
+                {options.departments.map((d) => (
+                  <option key={d.id} value={d.id}>{d.name}</option>
+                ))}
+              </select>
             </div>
 
             <div className="filter-group">
@@ -178,22 +231,12 @@ export default function SupervisorsDirectoryPage() {
 
             <div className="filter-group">
               <label>Institution</label>
-              <input
-                type="text"
-                placeholder="e.g. FMU"
-                value={institutionFilter}
-                onChange={(e) => setInstitutionFilter(e.target.value)}
-              />
-            </div>
-
-            <div className="filter-group">
-              <label>Department</label>
-              <input
-                type="text"
-                placeholder="e.g. Surgery Unit 1"
-                value={departmentFilter}
-                onChange={(e) => setDepartmentFilter(e.target.value)}
-              />
+              <select value={institutionFilter} onChange={(e) => setInstitutionFilter(e.target.value)}>
+                <option value="">All Institutions</option>
+                {options.institutions.map((i) => (
+                  <option key={i.id} value={i.id}>{i.name}</option>
+                ))}
+              </select>
             </div>
 
             {isAdmin && (
@@ -229,6 +272,7 @@ export default function SupervisorsDirectoryPage() {
                   <th>Designation</th>
                   <th>PMDC</th>
                   <th>Hospital & Dept</th>
+                  <th>Identity</th>
                   <th>Capacity</th>
                   <th>Status</th>
                   <th className="actions-header">Actions</th>
@@ -237,7 +281,7 @@ export default function SupervisorsDirectoryPage() {
               <tbody>
                 {supervisors.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="empty-row">
+                    <td colSpan={8} className="empty-row">
                       No supervisors matching the criteria found.
                     </td>
                   </tr>
@@ -250,13 +294,18 @@ export default function SupervisorsDirectoryPage() {
                           <span className="sup-username">@{s.user.username}</span>
                         </div>
                       </td>
-                      <td>{s.designation || <span className="muted-text">—</span>}</td>
+                      <td>{s.designation_ref_detail?.name || s.designation || <span className="muted-text">—</span>}</td>
                       <td className="pmdc-col">{s.pmdc_number || <span className="muted-text">—</span>}</td>
                       <td>
                         <div className="sup-details">
-                          <span className="sup-inst">{s.institution_name || "N/A"}</span>
-                          <span className="sup-dept">{s.department_name || "N/A"}</span>
+                          <span className="sup-inst">{s.training_site_ref_detail?.name || s.institution_name || "N/A"}</span>
+                          <span className="sup-dept">{s.department_ref_detail?.name || s.department_name || "N/A"}</span>
                         </div>
+                      </td>
+                      <td>
+                        <span className={`status-badge badge-${s.identity_status.toLowerCase()}`}>
+                          {s.identity_status}
+                        </span>
                       </td>
                       <td className="capacity-col">{s.max_active_residents} Active</td>
                       <td>
@@ -528,6 +577,16 @@ export default function SupervisorsDirectoryPage() {
           background: rgba(255, 100, 100, 0.15);
           color: #ff8080;
           border: 1px solid rgba(255, 100, 100, 0.3);
+        }
+        .badge-complete {
+          background: rgba(100, 255, 100, 0.15);
+          color: #a3ffa3;
+          border: 1px solid rgba(100, 255, 100, 0.3);
+        }
+        .badge-incomplete {
+          background: rgba(255, 150, 100, 0.15);
+          color: #ffdca3;
+          border: 1px solid rgba(255, 150, 100, 0.3);
         }
         .archive-badge {
           display: inline-block;
