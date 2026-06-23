@@ -1,46 +1,19 @@
-# API Contract Template — PGMS
+# API Contract Template
+
+Use this template when defining a backend API in a later brick.
 
 ## Endpoint
 
-`METHOD /api/...`
+- Method:
+- Path:
+- Purpose:
+- Auth:
+- Request:
+- Response:
+- Errors:
+- Idempotency:
+- Notes:
 
-## Purpose
+## Brick 0 note
 
-TBD
-
-## Auth/RBAC
-
-TBD
-
-## Request payload
-
-```json
-{}
-```
-
-## Response payload
-
-```json
-{}
-```
-
-## Validation errors
-
-```json
-{}
-```
-
-## Frontend caller
-
-TBD
-
-## Tests
-
-- backend test:
-- frontend API client test:
-
-## Acceptance decision
-
-- ACCEPTED
-- REVISE
-- REJECTED
+The only implemented endpoint in Brick 0 is `GET /api/health/`.

@@ -63,3 +63,21 @@ Use:
 - GO
 - CONDITIONAL GO
 - BLOCKED
+# Gates and Checks
+
+## Brick 0 checks
+
+- `docker compose config`
+- `cd pgms/backend && python manage.py check`
+- `cd pgms/backend && python manage.py test`
+- `cd pgms/frontend && npm install`
+- `cd pgms/frontend && npm run lint`
+- `cd pgms/frontend && npm run build`
+- `cd pgms && bash scripts/check_brick0.sh`
+
+## Pass criteria
+
+- The scaffold starts cleanly.
+- The health placeholder endpoint exists.
+- The frontend home page and health route exist.
+- No domain modules are present.

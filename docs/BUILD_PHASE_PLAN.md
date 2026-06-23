@@ -141,3 +141,17 @@ Only after core pilot is stable:
 - define restore proof
 - define admin UI
 - implement backup
+# Build Phase Plan
+
+## Brick 0
+
+- Create the clean technical scaffold.
+- Add only health placeholders.
+- Add verification evidence.
+
+## Future bricks
+
+- Brick 1: authentication foundation
+- Brick 2: masters foundation
+- Brick 3: people foundation
+- Brick 4+: domain workflows

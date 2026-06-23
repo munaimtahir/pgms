@@ -33,3 +33,12 @@ But even these pilot workflows must be freshly designed and accepted before impl
 ## Brick 0 goal
 
 Create only the technical scaffold and documentation system.
+
+## Brick 0 acceptance boundary
+
+- No domain apps
+- No custom user model
+- No copied legacy code
+- No business workflows
+- No role-specific UI
+- No production data model

@@ -54,3 +54,21 @@ Only after fresh acceptance:
 - REJECTED
 
 ## Final notes
+# Model Design Template
+
+Use this template when designing a model in a later brick.
+
+## Model
+
+- Name:
+- Purpose:
+- Fields:
+- Constraints:
+- Relationships:
+- Lifecycle notes:
+- Security notes:
+- Migration notes:
+
+## Brick 0 note
+
+No domain models are implemented in Brick 0.

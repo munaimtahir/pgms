@@ -1,54 +1,45 @@
-# PGMS Documentation Plan
-
-This documentation pack is for starting **PGMS** as a completely new clean-room software project.
-
-## Project identity
+# PGMS
 
 **PGMS** = **Postgraduate Management System**
 
-## Recommended workspace
+This repository starts as a clean-room scaffold. Brick 0 includes only the technical foundation needed for later work.
 
-```text
-pgms-workspace/
-├── pgms/                # New clean active project. Write code only here.
-├── pgsims-legacy/       # Old PGSIMS project. Read-only reference vault only.
-└── AGENTS.md            # Workspace-level agent instructions.
-```
+## Repository boundaries
 
-## Most important rule
-
-`PGMS` is a new software project from scratch.
-
-The old `pgsims-legacy/` folder is a read-only reference vault only. No previous model, module, API, route, database structure, serializer, frontend page, workflow, migration, or test data is accepted automatically.
+- Write code only inside `pgms/`.
+- Treat `pgsims-legacy/` as read-only reference material.
+- Do not copy legacy code, schema, routes, pages, workflows, migrations, or test data.
 
 ## Brick 0 scope
 
-Brick 0 is scaffold only.
+- Backend scaffold: Django + Django REST Framework
+- Frontend scaffold: Next.js + React + TypeScript
+- Database scaffold: PostgreSQL
+- Runtime scaffold: Docker Compose
+- Health placeholders only
 
-Brick 0 must not implement:
+## Allowed surface in Brick 0
+
+- Backend endpoint: `GET /api/health/`
+- Frontend routes: `/` and `/health`
+
+## Home page text requirement
+
+The home page must clearly state:
+
+- `PGMS`
+- `Postgraduate Management System`
+- `Brick 0 technical scaffold only.`
+- `No domain modules implemented yet.`
+
+## Non-goals
 
 - custom user model
-- Hospital model
-- Department model
-- HospitalDepartment model
-- Resident model
-- Supervisor model
-- HOD model
-- onboarding/import
+- domain models
+- onboarding
+- import/export
 - backup
-- Google Workspace bridge
-- AdminOps bridge
-- Google Drive connector
-- legacy rotations
-- old dashboard
-- domain-specific frontend pages
+- bridge modules
+- role dashboards
+- domain permissions
 - copied legacy code
-
-## Development philosophy
-
-Design fresh first.
-Accept and lock decision.
-Then optionally compare legacy.
-Then build in `pgms/` only.
-Test.
-Write evidence.

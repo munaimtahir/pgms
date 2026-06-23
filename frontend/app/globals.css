@@ -1,0 +1,82 @@
+:root {
+  color-scheme: dark;
+  --bg: #0a1020;
+  --bg-soft: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.12);
+  --text: #f5f7ff;
+  --muted: rgba(245, 247, 255, 0.72);
+  --accent: #8fd3ff;
+  --accent-strong: #d8f0ff;
+  --shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(143, 211, 255, 0.18), transparent 32%),
+    radial-gradient(circle at top right, rgba(121, 168, 255, 0.12), transparent 28%),
+    linear-gradient(180deg, #07101d 0%, #0a1020 100%);
+  color: var(--text);
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+body {
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+}
+
+.shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 3rem 1.5rem;
+}
+
+.hero,
+.panel {
+  width: min(720px, 100%);
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+  border-radius: 28px;
+  padding: clamp(2rem, 5vw, 4rem);
+}
+
+.eyebrow {
+  margin: 0 0 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  color: var(--accent);
+  font-size: 0.78rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 8vw, 4.75rem);
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+}
+
+.lead {
+  margin: 1.25rem 0 0;
+  font-size: 1.2rem;
+  color: var(--accent-strong);
+}
+
+.copy {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 52ch;
+}
+

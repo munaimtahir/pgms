@@ -17,3 +17,19 @@
 - UX_OVERLOAD
 - NOT_DESIGNED
 - NOT_BUILT
+# Frontend-Backend Truth Map Template
+
+Use this template to map frontend routes to backend endpoints in a later brick.
+
+## Route
+
+- Frontend path:
+- Backend endpoint(s):
+- Data owned by:
+- Loading strategy:
+- Error strategy:
+- Notes:
+
+## Brick 0 note
+
+Brick 0 contains only placeholder health surfaces.

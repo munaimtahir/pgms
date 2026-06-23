@@ -43,3 +43,23 @@ The old app contains no production data that needs preservation. PGMS starts wit
 ## ADR-006 — No bridge modules in early core
 
 Google Workspace, AdminOps, Google Drive connector, and legacy rotations remain out of scope until explicitly approved later.
+# Architecture Decisions
+
+Use this document to record architecture decisions as they are accepted.
+
+## Brick 0 status
+
+- No domain architecture is locked yet.
+- The scaffold stack is fixed to:
+  - Django + Django REST Framework backend
+  - Next.js + React + TypeScript frontend
+  - PostgreSQL database
+  - Docker Compose runtime
+
+## Decision entries
+
+- Date:
+- Decision:
+- Context:
+- Consequences:
+- Alternatives considered:

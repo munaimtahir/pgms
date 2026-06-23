@@ -58,3 +58,21 @@ Only after the workflow is freshly accepted.
 - ACCEPTED
 - REVISE
 - REJECTED
+# Workflow Design Template
+
+Use this template when designing a workflow in a later brick.
+
+## Workflow
+
+- Name:
+- Trigger:
+- Actors:
+- Inputs:
+- Outputs:
+- Validation rules:
+- Failure states:
+- Audit trail:
+
+## Brick 0 note
+
+No workflows are implemented in Brick 0.

@@ -42,3 +42,20 @@ Every legacy comparison must be documented:
 
 | Legacy file inspected | Reason | Reuse decision | Adaptation needed |
 |---|---|---|---|
+# Legacy Reuse Protocol
+
+This project is clean-room. Treat `pgsims-legacy/` as reference-only.
+
+## Rules
+
+- Do not copy code directly.
+- Do not copy schemas directly.
+- Do not copy route structures directly.
+- Do not copy UI layouts directly.
+- Do not copy tests directly.
+
+## If legacy is consulted
+
+- Describe the idea in your own words.
+- Re-derive the implementation inside `pgms/`.
+- Record why the reuse is safe or rejected.
